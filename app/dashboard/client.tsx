@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { signOut } from "../actions";
+import { signOut, simulateLead } from "../actions";
 import type { Profile, Lead, LeadNote } from "@/types";
 import { formatPrice, formatRelativeTime } from "@/lib/utils";
 
@@ -236,27 +236,50 @@ export function DashboardClient({ currentUser, team, initialLeads }: Props) {
               </h1>
             </div>
 
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
-              {[
-                { v: "all", l: "Alle" },
-                { v: "new", l: "Nieuw" },
-                { v: "contacted", l: "Verstuurd" },
-                { v: "booked", l: "Geboekt" },
-                { v: "disqualified", l: "Gefilterd" },
-              ].map(({ v, l }) => (
-                <button
-                  key={v}
-                  onClick={() => setFilter(v)}
-                  style={{
-                    padding: "7px 12px", borderRadius: 999, fontSize: 12, fontWeight: 500,
-                    background: filter === v ? "#1F3D2B" : "white",
-                    color: filter === v ? "white" : "#525252",
-                    border: "1px solid " + (filter === v ? "#1F3D2B" : "#E5DFD3"),
-                  }}
-                >
-                  {l}
-                </button>
-              ))}
+            <div style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap", alignItems: "flex-start" }}>
+              <div style={{ flex: 1, minWidth: 200, display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {[
+                  { v: "all", l: "Alle" },
+                  { v: "new", l: "Nieuw" },
+                  { v: "contacted", l: "Verstuurd" },
+                  { v: "booked", l: "Geboekt" },
+                  { v: "disqualified", l: "Gefilterd" },
+                ].map(({ v, l }) => (
+                  <button
+                    key={v}
+                    onClick={() => setFilter(v)}
+                    style={{
+                      padding: "7px 12px", borderRadius: 999, fontSize: 12, fontWeight: 500,
+                      background: filter === v ? "#1F3D2B" : "white",
+                      color: filter === v ? "white" : "#525252",
+                      border: "1px solid " + (filter === v ? "#1F3D2B" : "#E5DFD3"),
+                    }}
+                  >
+                    {l}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={async () => {
+                  setBusy(true);
+                  const result = await simulateLead();
+                  setBusy(false);
+                  if (result.ok) {
+                    showToast("Nieuwe Funda-lead binnengekomen");
+                    router.refresh();
+                  } else {
+                    showToast("Simulatie mislukt: " + (result.error || "onbekende fout"));
+                  }
+                }}
+                disabled={busy}
+                className="btn btn-gold"
+                style={{ flexShrink: 0 }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                </svg>
+                {busy ? "Bezig..." : "Simuleer lead"}
+              </button>
             </div>
 
             <div style={{ position: "relative", marginBottom: 20 }}>
